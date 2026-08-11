@@ -1,0 +1,6 @@
+"Id";"Tähis";"Komponendi trükkplaadijälg";"Kogus";"Nimetus";"Tarnija ja viide";
+1;"IN1, OUT1";"PinSocket_1x05_P2.54mm_Vertical";2;"Conn_01x05_Pin";;;
+2;"L1, L2, L3, L4";"CA56-12CGKWA";4;"CC56-12CGKWA";;;
+3;"Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16";"SOT-23";16;"SS8050";;;
+4;"R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48";"R_0805_2012Metric_Pad1.20x1.40mm_HandSolder";48;"300";;;
+5;"U1, U2, U3, U4, U5, U6";"SOIC-16_3.9x9.9mm_P1.27mm";6;"74HC595";;;

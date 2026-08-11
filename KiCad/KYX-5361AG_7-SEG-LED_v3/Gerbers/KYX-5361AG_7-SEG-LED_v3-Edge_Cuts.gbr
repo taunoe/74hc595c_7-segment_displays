@@ -1,0 +1,23 @@
+%TF.GenerationSoftware,KiCad,Pcbnew,10.0.3*%
+%TF.CreationDate,2026-06-15T19:35:29+03:00*%
+%TF.ProjectId,KYX-5361AG_7-SEG-LED_v3,4b59582d-3533-4363-9141-475f372d5345,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 10.0.3) date 2026-06-15 19:35:29*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,Profile*%
+%ADD10C,0.050000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X104751977Y-84172847D02*
+X206899999Y-84172847D01*
+X206899999Y-123746628D01*
+X104751977Y-123746628D01*
+X104751977Y-84172847D01*
+M02*
