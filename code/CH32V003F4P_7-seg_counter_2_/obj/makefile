@@ -55,7 +55,7 @@ main-build: CH32V003F4P_7-seg_counter_2_.elf secondary-outputs
 
 # Tool invocations
 CH32V003F4P_7-seg_counter_2_.elf: $(OBJS) $(USER_OBJS_ESCAPE)
-	@	riscv-none-embed-gcc -march=rv32ecxw -mabi=ilp32e -msmall-data-limit=0 -msave-restore -fmax-errors=20 -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized -g -T "/home/tauno/mounriver-studio-projects/CH32V003F4P_7-seg_counter_2_/Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -Wl,-Map,"CH32V003F4P_7-seg_counter_2_.map" --specs=nano.specs --specs=nosys.specs -o "CH32V003F4P_7-seg_counter_2_.elf" $(OBJS) $(LIBS) -lprintf
+	@	riscv-none-embed-gcc -march=rv32ecxw -mabi=ilp32e -msmall-data-limit=0 -msave-restore -fmax-errors=20 -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized -g -T "/home/tauno/KETTAS1/MyGitHub/74hc595c_7-segment_displays/code/CH32V003F4P_7-seg_counter_2_/Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -Wl,-Map,"CH32V003F4P_7-seg_counter_2_.map" --specs=nano.specs --specs=nosys.specs -o "CH32V003F4P_7-seg_counter_2_.elf" $(OBJS) $(LIBS) -lprintf
 CH32V003F4P_7-seg_counter_2_.hex: CH32V003F4P_7-seg_counter_2_.elf
 	@	riscv-none-embed-objcopy -O ihex "CH32V003F4P_7-seg_counter_2_.elf" "CH32V003F4P_7-seg_counter_2_.hex"
 CH32V003F4P_7-seg_counter_2_.lst: CH32V003F4P_7-seg_counter_2_.elf
