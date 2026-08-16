@@ -2,7 +2,7 @@
  * File Name          : main.c
  * Author             : Tauno Erik
  * Version            : V1.0.0
- * Date               : 2026/08/02
+ * Date               : 2026/08/16
  * Description        : Main program body.
  *******************************************************************************/
 
@@ -17,12 +17,6 @@
 #include "debug.h"
 #include <stdio.h>
 #include <stdbool.h>
-
-// Define Data frame
-/* typedef struct {
-    uint8_t frame[16];
-    uint8_t size;
-} Data; */
 
 // Define Time
 struct Aeg {
@@ -60,7 +54,7 @@ struct Data {
 
 #define OFF 0b00000000
 
-static const uint8_t NUMBRID[10] = {
+static const uint8_t NUMBRID[11] = {
     0b00111111,  // 0
     0b00000110,  // 1
     0b01011011,  // 2
@@ -71,6 +65,7 @@ static const uint8_t NUMBRID[10] = {
     0b00000111,  // 7
     0b01111111,  // 8
     0b01101111,  // 9
+    0b00000000   // 10 - OFF
 };
 
 static const uint8_t POS[8] = {
@@ -111,7 +106,9 @@ void update_counter (uint8_t digits[]);
 void update_display (uint8_t digits_alumine[]);
 //void update_display_uus (uint8_t digits_alumine[]);
 void update_display_uus (const struct Data *rows);
-
+void remove_leading_zeros (uint8_t digits[]);
+void remove_trailing_zeros(uint8_t digits[]);
+void update_backwards_counter(uint8_t digits[]);
 
 int main (void) {
 
@@ -146,14 +143,18 @@ int main (void) {
         false  // is_time
     };
 
-    struct Data numbridreas = {
-        // paremalt vasakule LSB
-        {2, 3, 4, 5, 6, 7, 0, 0}, // alumine
-        {9, 8, 7, 6, 5, 4, 3, 2}  // ?lemine
+    struct Aeg counter_aeglane = {
+        0,      // last_time
+        1000000,  // interval
+        false   // is_time
     };
 
-    //uint8_t digits_alumine[8] = {2, 3, 4, 5, 6, 7, 8, 9};
-    //uint8_t digits_ylemine[8] = {9, 8, 7, 6, 5, 4, 3, 2};
+    struct Data numbridreas = {
+        // paremalt vasakule LSB
+        // 10 == OFF
+        {0, 0, 0, 0, 0, 0, 0, 0}, // alumine
+        {0, 0, 0, 0, 0, 0, 0, 0}  // ?lemine
+    };
 
     printf ("SystemClk: %d\r\n", SystemCoreClock);
     printf ("ChipID: %08x\r\n", DBGMCU_GetCHIPID());
@@ -174,26 +175,38 @@ int main (void) {
             display.is_time = true;
         }
 
+        // Counter time
+        if (current_time - counter_aeglane.last_time >= counter_aeglane.interval) {
+            counter_aeglane.last_time = current_time;
+            counter_aeglane.is_time = true;
+        }
+
         // Update counter
         if (counter.is_time) {
             counter.is_time = false;
-            //update_counter (digits_alumine);
             update_counter (numbridreas.alumine);
+        }
+
+        if (counter_aeglane.is_time) {
+            counter_aeglane.is_time = false;
+            update_backwards_counter (numbridreas.ylemine);
         }
 
         // Update display
         if (display.is_time) {
             display.is_time = false;
             //update_display_uus (digits_alumine);
+            remove_leading_zeros(numbridreas.alumine);
+            remove_trailing_zeros(numbridreas.ylemine);
             update_display_uus (&numbridreas);
         }
     }
 }
 
 
-/*
+/***************************************************
  *
- */
+ **************************************************/
 void SysTick_FreeRunning_Init (void) {
     ticks_per_us = SystemCoreClock / 1000000;  // 48 ticks per us at 48MHz
 
@@ -298,10 +311,17 @@ void SPI_SR_latch(void) {
 Loendur
 Paremalt Vasakule
 Tavalised numbrid
+Muudab numbreid massiivis
 */
 void update_counter (uint8_t digits[]) {
-    digits[0]++;
+    // muuda 10-ned (off) tagasi 0-ks
+    for(uint8_t i = 0; i < 8; i++){
+         if (digits[i] > 9) {
+            digits[i] = 0;
+         }
+    }
 
+    digits[0]++;
     if (digits[0] > 9) {
         digits[0] = 0;
         digits[1]++;
@@ -628,6 +648,7 @@ void update_display (uint8_t row[]) {
 /*
 */
 void update_display_uus (const struct Data *rows) {
+    if (rows == NULL) return; // Guard against null pointers
     static int pos_counter = 0;
 
     switch (pos_counter) {
@@ -680,4 +701,100 @@ void update_display_uus (const struct Data *rows) {
     SPI_SR_latch();
 }
 
+/*
+peab olema eraldi array?
+*/
+void remove_leading_zeros (uint8_t digits[]) {
+    uint8_t off = 10;
 
+    if (digits[7] == 0) {
+        digits[7] = off;
+    }
+    if (digits[7] == off & digits[6] == 0) {
+        digits[6] = off;
+    }
+    if (digits[6] == off & digits[5] == 0) {
+        digits[5] = off;
+    }
+    if (digits[5] == off & digits[4] == 0) {
+        digits[4] = off;
+    }
+    if (digits[4] == off & digits[3] == 0) {
+        digits[3] = off;
+    }
+    if (digits[3] == off & digits[2] == 0) {
+        digits[2] = off;
+    }
+    if (digits[2] == off & digits[1] == 0) {
+        digits[1] = off;
+    }
+    if (digits[1] == off & digits[0] == 0) {
+        digits[0] = off;
+    }
+}
+
+void update_backwards_counter(uint8_t digits[]) {
+    digits[7]++;
+
+    if (digits[7] > 9) {
+        digits[7] = 0;
+        digits[6]++;
+    }
+    if (digits[6] > 9) {
+        digits[6] = 0;
+        digits[5]++;
+    }
+    if (digits[5] > 9) {
+        digits[5] = 0;
+        digits[4]++;
+    }
+    if (digits[4] > 9) {
+        digits[4] = 0;
+        digits[3]++;
+    }
+    if (digits[3] > 9) {
+        digits[3] = 0;
+        digits[2]++;
+    }
+    if (digits[2] > 9) {
+        digits[2] = 0;
+        digits[1]++;
+    }
+    if (digits[1] > 9) {
+        digits[1] = 0;
+        digits[0]++;
+    }
+    if (digits[0] > 9) {
+        digits[0] = 0;
+    }
+}
+
+
+void remove_trailing_zeros(uint8_t digits[]) {
+    uint8_t off = 10;
+
+    if (digits[0] == 0) {
+        digits[0] = off;
+    }
+    if (digits[0] == off & digits[1] == 0) {
+        digits[1] = off;
+    }
+    if (digits[1] == off & digits[2] == 0) {
+        digits[2] = off;
+    }
+    if (digits[2] == off & digits[3] == 0) {
+        digits[3] = off;
+    }
+    if (digits[3] == off & digits[4] == 0) {
+        digits[4] = off;
+    }
+    /*if (digits[4] == off & digits[5] == 0) {
+        digits[5] = off;
+    }
+    if (digits[5] == off & digits[6] == 0) {
+        digits[6] = off;
+    }
+    if (digits[6] == off & digits[7] == 0) {
+        digits[7] = off;
+    } */
+}
