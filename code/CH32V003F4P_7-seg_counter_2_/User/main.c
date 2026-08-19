@@ -2,7 +2,7 @@
  * File Name          : main.c
  * Author             : Tauno Erik
  * Version            : V1.0.0
- * Date               : 2026/08/16
+ * Date               : 2026/08/19
  * Description        : Main program body.
  *******************************************************************************/
 
@@ -54,6 +54,9 @@ struct Data {
 
 #define OFF 0b00000000
 
+/*
+LEDid mis peavada p?lema, et kuvada numbreid
+*/
 static const uint8_t NUMBRID[11] = {
     0b00111111,  // 0
     0b00000110,  // 1
@@ -68,17 +71,9 @@ static const uint8_t NUMBRID[11] = {
     0b00000000   // 10 - OFF
 };
 
-static const uint8_t POS[8] = {
-    0b00000001,  // 0
-    0b00000010,  // 1
-    0b00000100,  // 2
-    0b00001000,  // 3
-    0b00010000,  // 4
-    0b00100000,  // 5
-    0b01000000,  // 6
-    0b10000000   // 7
-};
-
+/*
+Positsioonid mida saab korraga uuendada
+*/
 static const uint8_t AKTIIVNE_POS[4] = {
     0b00010001,   // 0 & 4
     0b00100010,   // 1 & 5
@@ -103,15 +98,11 @@ void SPI_SR_Init (void);
 void SPI_SR_Send (uint8_t data, uint8_t dir);
 void SPI_SR_latch(void);
 void update_counter (uint8_t digits[]);
-void update_display (uint8_t digits_alumine[]);
-//void update_display_uus (uint8_t digits_alumine[]);
-void update_display_uus (const struct Data *rows);
+void update_display (const struct Data *rows);
 void remove_leading_zeros (uint8_t digits[]);
-void remove_trailing_zeros(uint8_t digits[]);
-void update_backwards_counter(uint8_t digits[]);
+
 
 int main (void) {
-
     SystemInit();
     NVIC_PriorityGroupConfig (NVIC_PriorityGroup_1);
     // RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
@@ -145,7 +136,7 @@ int main (void) {
 
     struct Aeg counter_aeglane = {
         0,      // last_time
-        1000000,  // interval
+        199333,  // interval
         false   // is_time
     };
 
@@ -189,7 +180,8 @@ int main (void) {
 
         if (counter_aeglane.is_time) {
             counter_aeglane.is_time = false;
-            update_backwards_counter (numbridreas.ylemine);
+            update_counter (numbridreas.ylemine);
+            /* remove_trailing_zeros(numbridreas.ylemine); */
         }
 
         // Update display
@@ -197,8 +189,9 @@ int main (void) {
             display.is_time = false;
             //update_display_uus (digits_alumine);
             remove_leading_zeros(numbridreas.alumine);
-            remove_trailing_zeros(numbridreas.ylemine);
-            update_display_uus (&numbridreas);
+            remove_leading_zeros(numbridreas.ylemine);
+
+            update_display (&numbridreas);
         }
     }
 }
@@ -356,298 +349,11 @@ void update_counter (uint8_t digits[]) {
     }
 }
 
+
 /*
 Uuenda ekraanil kuvatavaid numbreid.
-?ks on korraga aktiivne
 */
-void update_display (uint8_t row[]) {
-    static int pos_counter = 0;
-
-    switch (pos_counter) {
-        case 0:
-            // Sea alumise rea esimene number ON
-            // ja sea alumise rea 4 number ON
-            SPI_SR_Send (AKTIIVNE_POS[0], LSB_FIRST);                      // digit2 alumine rida
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (NUMBRID[row[0]], MSB_FIRST);  // data4
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 1:
-            if ((row[7] == 0) &&
-                (row[6] == 0) &&
-                (row[5] == 0) &&
-                (row[4] == 0) &&
-                (row[3] == 0) &&
-                (row[2] == 0) &&
-                (row[1] == 0)) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                // Sea alumise rea esimene number ON
-                SPI_SR_Send (POS[1], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (NUMBRID[row[1]], MSB_FIRST);  // data4
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 2:
-            if ((row[6] == 0) &&
-                (row[5] == 0) &&
-                (row[4] == 0) &&
-                (row[3] == 0) &&
-                (row[2] == 0)) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                // Sea alumise rea esimene number ON
-                SPI_SR_Send (POS[2], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (NUMBRID[row[2]], MSB_FIRST);  // data4
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 3:
-            if ((row[7] == 0) &&
-                (row[6] == 0) &&
-                (row[5] == 0) &&
-                (row[4] == 0) &&
-                (row[3] == 0)) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                // Sea alumise rea esimene number ON
-                SPI_SR_Send (POS[3], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (NUMBRID[row[3]], MSB_FIRST);  // data4
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 4:
-            if ((row[7] == 0) &&
-                (row[6] == 0) &&
-                (row[5] == 0) &&
-                (row[4] == 0)) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                // Sea alumise rea esimene number ON
-                SPI_SR_Send (POS[4], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-            SPI_SR_Send (NUMBRID[row[4]], MSB_FIRST);  // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 5:
-            // Sea alumise rea esimene number ON
-            // Sea alumise rea esimene number ON
-            if ((row[7] == 0) &&
-                (row[6] == 0) &&
-                (row[5] == 0)) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                SPI_SR_Send (POS[5], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-            SPI_SR_Send (NUMBRID[row[5]], MSB_FIRST);  // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 6:
-            // Sea alumise rea esimene number ON
-            if ((row[7] == 0) &&
-                (row[6] == 0)) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                SPI_SR_Send (POS[6], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-            SPI_SR_Send (NUMBRID[row[6]], MSB_FIRST);  // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        case 7:
-            // Sea alumise rea esimene number ON
-            if (row[7] == 0) {
-                SPI_SR_Send (OFF, LSB_FIRST);
-            } else {
-                SPI_SR_Send (POS[7], LSB_FIRST);                  // digit2 alumine rida
-            }
-            SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-            SPI_SR_Send (NUMBRID[row[7]], MSB_FIRST);  // data3
-            SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-            SPI_SR_Send (OFF, MSB_FIRST);
-            break;
-        default:
-            break;
-    }
-    /////
-/*
-    if (pos_counter == 0) {
-        // Sea alumise rea esimene number ON
-        SPI_SR_Send (POS[0], LSB_FIRST);                      // digit2 alumine rida
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (NUMBRID[digits_alumine[0]], MSB_FIRST);  // data4
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 1) {
-        if ((digits_alumine[7] == 0) &&
-            (digits_alumine[6] == 0) &&
-            (digits_alumine[5] == 0) &&
-            (digits_alumine[4] == 0) &&
-            (digits_alumine[3] == 0) &&
-            (digits_alumine[2] == 0) &&
-            (digits_alumine[1] == 0)) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            // Sea alumise rea esimene number ON
-            SPI_SR_Send (POS[1], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (NUMBRID[digits_alumine[1]], MSB_FIRST);  // data4
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 2) {
-        if ((digits_alumine[7] == 0) &&
-            (digits_alumine[6] == 0) &&
-            (digits_alumine[5] == 0) &&
-            (digits_alumine[4] == 0) &&
-            (digits_alumine[3] == 0) &&
-            (digits_alumine[2] == 0)) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            // Sea alumise rea esimene number ON
-            SPI_SR_Send (POS[2], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (NUMBRID[digits_alumine[2]], MSB_FIRST);  // data4
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 3) {
-        if ((digits_alumine[7] == 0) &&
-            (digits_alumine[6] == 0) &&
-            (digits_alumine[5] == 0) &&
-            (digits_alumine[4] == 0) &&
-            (digits_alumine[3] == 0)) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            // Sea alumise rea esimene number ON
-            SPI_SR_Send (POS[3], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (NUMBRID[digits_alumine[3]], MSB_FIRST);  // data4
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 4) {
-        if ((digits_alumine[7] == 0) &&
-            (digits_alumine[6] == 0) &&
-            (digits_alumine[5] == 0) &&
-            (digits_alumine[4] == 0)) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            // Sea alumise rea esimene number ON
-            SPI_SR_Send (POS[4], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-        SPI_SR_Send (NUMBRID[digits_alumine[4]], MSB_FIRST);  // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 5) {
-        // Sea alumise rea esimene number ON
-        // Sea alumise rea esimene number ON
-        if ((digits_alumine[7] == 0) &&
-            (digits_alumine[6] == 0) &&
-            (digits_alumine[5] == 0)) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            SPI_SR_Send (POS[5], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-        SPI_SR_Send (NUMBRID[digits_alumine[5]], MSB_FIRST);  // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 6) {
-        // Sea alumise rea esimene number ON
-        if ((digits_alumine[7] == 0) &&
-            (digits_alumine[6] == 0)) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            SPI_SR_Send (POS[6], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-        SPI_SR_Send (NUMBRID[digits_alumine[6]], MSB_FIRST);  // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-
-    if (pos_counter == 7) {
-        // Sea alumise rea esimene number ON
-        if (digits_alumine[7] == 0) {
-            SPI_SR_Send (OFF, LSB_FIRST);
-        } else {
-            SPI_SR_Send (POS[7], LSB_FIRST);                  // digit2 alumine rida
-        }
-        SPI_SR_Send (OFF, LSB_FIRST);                         // digit1 ¨¹lemine rida
-
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data4
-        SPI_SR_Send (NUMBRID[digits_alumine[7]], MSB_FIRST);  // data3
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data2
-        SPI_SR_Send (OFF, MSB_FIRST);                         // data1
-    }
-    */
-
-    pos_counter++;
-    if (pos_counter >= 8) {
-        pos_counter = 0;
-    }
-    SPI_SR_latch();
-}
-
-/*
-*/
-void update_display_uus (const struct Data *rows) {
+void update_display (const struct Data *rows) {
     if (rows == NULL) return; // Guard against null pointers
     static int pos_counter = 0;
 
@@ -701,8 +407,10 @@ void update_display_uus (const struct Data *rows) {
     SPI_SR_latch();
 }
 
+
 /*
-peab olema eraldi array?
+Eemalda ees olevad nullid
+10 on OFF
 */
 void remove_leading_zeros (uint8_t digits[]) {
     uint8_t off = 10;
@@ -710,91 +418,26 @@ void remove_leading_zeros (uint8_t digits[]) {
     if (digits[7] == 0) {
         digits[7] = off;
     }
-    if (digits[7] == off & digits[6] == 0) {
+    if (digits[7] == off && digits[6] == 0) {
         digits[6] = off;
     }
-    if (digits[6] == off & digits[5] == 0) {
+    if (digits[6] == off && digits[5] == 0) {
         digits[5] = off;
     }
-    if (digits[5] == off & digits[4] == 0) {
+    if (digits[5] == off && digits[4] == 0) {
         digits[4] = off;
     }
-    if (digits[4] == off & digits[3] == 0) {
+    if (digits[4] == off && digits[3] == 0) {
         digits[3] = off;
     }
-    if (digits[3] == off & digits[2] == 0) {
+    if (digits[3] == off && digits[2] == 0) {
         digits[2] = off;
     }
-    if (digits[2] == off & digits[1] == 0) {
+    if (digits[2] == off && digits[1] == 0) {
         digits[1] = off;
     }
-    if (digits[1] == off & digits[0] == 0) {
+    if (digits[1] == off && digits[0] == 0) {
         digits[0] = off;
     }
 }
 
-void update_backwards_counter(uint8_t digits[]) {
-    digits[7]++;
-
-    if (digits[7] > 9) {
-        digits[7] = 0;
-        digits[6]++;
-    }
-    if (digits[6] > 9) {
-        digits[6] = 0;
-        digits[5]++;
-    }
-    if (digits[5] > 9) {
-        digits[5] = 0;
-        digits[4]++;
-    }
-    if (digits[4] > 9) {
-        digits[4] = 0;
-        digits[3]++;
-    }
-    if (digits[3] > 9) {
-        digits[3] = 0;
-        digits[2]++;
-    }
-    if (digits[2] > 9) {
-        digits[2] = 0;
-        digits[1]++;
-    }
-    if (digits[1] > 9) {
-        digits[1] = 0;
-        digits[0]++;
-    }
-    if (digits[0] > 9) {
-        digits[0] = 0;
-    }
-}
-
-
-void remove_trailing_zeros(uint8_t digits[]) {
-    uint8_t off = 10;
-
-    if (digits[0] == 0) {
-        digits[0] = off;
-    }
-    if (digits[0] == off & digits[1] == 0) {
-        digits[1] = off;
-    }
-    if (digits[1] == off & digits[2] == 0) {
-        digits[2] = off;
-    }
-    if (digits[2] == off & digits[3] == 0) {
-        digits[3] = off;
-    }
-    if (digits[3] == off & digits[4] == 0) {
-        digits[4] = off;
-    }
-    /*if (digits[4] == off & digits[5] == 0) {
-        digits[5] = off;
-    }
-    if (digits[5] == off & digits[6] == 0) {
-        digits[6] = off;
-    }
-    if (digits[6] == off & digits[7] == 0) {
-        digits[7] = off;
-    } */
-}
